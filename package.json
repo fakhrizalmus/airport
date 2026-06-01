@@ -1,0 +1,24 @@
+{
+  "name": "susi-air-pilot-dashboard",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview"
+  },
+  "dependencies": {
+    "@lucide/vue": "latest",
+    "@nuxtjs/tailwindcss": "latest",
+    "@pinia/nuxt": "latest",
+    "nuxt": "latest",
+    "pinia": "latest",
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vue-tsc": "^3.3.3"
+  }
+}
