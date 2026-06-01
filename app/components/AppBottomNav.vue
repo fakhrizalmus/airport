@@ -11,8 +11,8 @@ const route = useRoute()
 const navItems = [
   { label: 'Home', to: '/home', icon: Home },
   { label: 'Schedule', to: '/schedule', icon: CalendarDays },
-  { label: 'Logbook', to: '/home', icon: BookOpenCheck },
-  { label: 'More', to: '/home', icon: MoreHorizontal }
+  { label: 'Logbook', to: '/logbook', icon: BookOpenCheck },
+  { label: 'More', to: '/more', icon: MoreHorizontal }
 ]
 </script>
 
@@ -24,7 +24,7 @@ const navItems = [
         :key="item.label"
         :to="item.to"
         class="tap-target flex flex-col items-center justify-center gap-1"
-        :class="route.path === item.to && item.label !== 'Logbook' && item.label !== 'More' ? 'text-susi-red' : 'text-slate-500'"
+        :class="route.path === item.to ? 'text-susi-red' : 'text-slate-500'"
       >
         <component :is="item.icon" class="h-5 w-5" />
         <span class="text-xs font-bold">{{ item.label }}</span>
