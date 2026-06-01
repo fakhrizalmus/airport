@@ -62,7 +62,8 @@ const changeMonth = (direction: -1 | 1) => {
               :disabled="isChangingMonth"
               @click="changeMonth(1)"
             >
-              <ArrowRight class="h-4 w-4" />
+              <Loader2 v-if="isChangingMonth" class="h-4 w-4 animate-spin" />
+              <ArrowRight v-else class="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -83,7 +84,7 @@ const changeMonth = (direction: -1 | 1) => {
             :class="[
               day.isCurrentMonth ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50 text-slate-300',
               day.isToday ? 'ring-2 ring-susi-red' : '',
-              selectedDate === day.iso ? 'z-10 border-susi-navy bg-red-50 outline outline-2 outline-offset-2 outline-susi-navy' : ''
+              selectedDate === day.iso ? 'z-10 border-2 border-susi-navy bg-red-50' : ''
             ]"
             :aria-pressed="selectedDate === day.iso"
             @click="openDay(day.iso)"
