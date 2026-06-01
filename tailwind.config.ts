@@ -20,6 +20,9 @@ export default <Partial<Config>>{
       },
       boxShadow: {
         panel: '0 12px 32px rgba(22, 32, 51, 0.08)'
+      },
+      borderRadius: {
+        md: '14px'
       }
     }
   }

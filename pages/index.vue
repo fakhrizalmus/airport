@@ -72,7 +72,7 @@ const submitLogin = () => {
 
         <button
           type="submit"
-          class="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-md bg-susi-red px-4 text-sm font-bold text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-susi-red/30"
+          class="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-susi-red px-4 text-sm font-bold text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-susi-red/30"
         >
           <LogIn class="h-5 w-5" />
           Sign in
