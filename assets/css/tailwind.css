@@ -13,3 +13,13 @@
     min-width: 320px;
   }
 }
+
+@layer components {
+  .tap-target {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tap-target:active {
+    transform: scale(0.97);
+  }
+}

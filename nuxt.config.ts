@@ -10,6 +10,18 @@ export default defineNuxtConfig({
         {
           name: 'description',
           content: 'Pilot dashboard for schedules, flight-hour limits, and document validity.'
+        },
+        {
+          name: 'theme-color',
+          content: '#EC343B'
+        },
+        {
+          name: 'apple-mobile-web-app-capable',
+          content: 'yes'
+        },
+        {
+          name: 'apple-mobile-web-app-title',
+          content: 'Susi Air'
         }
       ],
       link: [
@@ -19,7 +31,9 @@ export default defineNuxtConfig({
           rel: 'stylesheet',
           href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'
         },
-        { rel: 'icon', type: 'image/png', href: '/images/susi-air-logo.png' }
+        { rel: 'icon', type: 'image/png', href: '/images/susi-air-logo.png' },
+        { rel: 'apple-touch-icon', href: '/images/susi-air-logo.png' },
+        { rel: 'manifest', href: '/manifest.webmanifest' }
       ]
     }
   }

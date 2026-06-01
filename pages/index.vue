@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { HelpCircle, LockKeyhole, LogIn, UserRound } from '@lucide/vue'
+import { HelpCircle, Loader2, LockKeyhole, LogIn, UserRound } from '@lucide/vue'
+import { useRouter } from '#app'
+import { reactive, ref } from 'vue'
 
 const router = useRouter()
+const isSubmitting = ref(false)
 
 const credentials = reactive({
   username: '',
@@ -9,7 +12,10 @@ const credentials = reactive({
 })
 
 const submitLogin = () => {
-  router.push('/home')
+  isSubmitting.value = true
+  window.setTimeout(() => {
+    router.push('/home')
+  }, 450)
 }
 </script>
 
@@ -72,10 +78,12 @@ const submitLogin = () => {
 
         <button
           type="submit"
-          class="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-susi-red px-4 text-sm font-bold text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-susi-red/30"
+          class="tap-target mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-susi-red px-4 text-sm font-bold text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-susi-red/30 disabled:cursor-wait disabled:opacity-80"
+          :disabled="isSubmitting"
         >
-          <LogIn class="h-5 w-5" />
-          Sign in
+          <Loader2 v-if="isSubmitting" class="h-5 w-5 animate-spin" />
+          <LogIn v-else class="h-5 w-5" />
+          {{ isSubmitting ? 'Signing in' : 'Sign in' }}
         </button>
 
         <a

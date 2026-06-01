@@ -2,11 +2,9 @@
 import {
   ArrowLeft,
   ArrowRight,
-  BookOpenCheck,
   CalendarDays,
   Check,
-  Home,
-  MoreHorizontal,
+  Loader2,
   Plane
 } from '@lucide/vue'
 import { storeToRefs } from 'pinia'
@@ -20,29 +18,27 @@ const {
 } = storeToRefs(dashboard)
 
 const selectedDate = ref<string | null>(null)
+const isChangingMonth = ref(false)
 
 const openDay = (date: string) => {
   selectedDate.value = date
+}
+
+const changeMonth = (direction: -1 | 1) => {
+  isChangingMonth.value = true
+  dashboard.moveMonth(direction)
+  window.setTimeout(() => {
+    isChangingMonth.value = false
+  }, 350)
 }
 </script>
 
 <template>
   <main class="min-h-screen bg-susi-cloud pb-24">
-    <header class="bg-white shadow-sm ring-1 ring-slate-200">
-      <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-        <div class="flex items-center gap-3">
-          <img src="/images/susi-air-logo.png" alt="Susi Air" class="h-11 w-11 rounded-md bg-white object-contain ring-1 ring-slate-200">
-          <div>
-            <p class="text-sm font-bold uppercase text-susi-red">Crew Schedule</p>
-            <h1 class="text-xl font-bold text-susi-ink">Monthly calendar</h1>
-          </div>
-        </div>
-        <Plane class="h-6 w-6 text-susi-navy" />
-      </div>
-    </header>
+    <AppHeader eyebrow="Crew Schedule" title="Monthly calendar" :icon="Plane" />
 
     <div class="mx-auto max-w-6xl space-y-5 px-4 py-5 sm:px-6 lg:px-8">
-      <section class="rounded-md bg-white p-5 shadow-panel ring-1 ring-slate-200">
+      <UiPanel>
         <div class="flex items-center justify-between gap-4">
           <div>
             <p class="text-sm font-semibold uppercase text-susi-red">Schedule</p>
@@ -51,44 +47,48 @@ const openDay = (date: string) => {
           <div class="flex gap-2">
             <button
               type="button"
-              class="grid h-10 w-10 place-items-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50"
+              class="tap-target grid h-10 w-10 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70"
               title="Previous month"
-              @click="dashboard.moveMonth(-1)"
+              :disabled="isChangingMonth"
+              @click="changeMonth(-1)"
             >
-              <ArrowLeft class="h-4 w-4" />
+              <Loader2 v-if="isChangingMonth" class="h-4 w-4 animate-spin" />
+              <ArrowLeft v-else class="h-4 w-4" />
             </button>
             <button
               type="button"
-              class="grid h-10 w-10 place-items-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50"
+              class="tap-target grid h-10 w-10 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70"
               title="Next month"
-              @click="dashboard.moveMonth(1)"
+              :disabled="isChangingMonth"
+              @click="changeMonth(1)"
             >
               <ArrowRight class="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <div class="mt-5 grid grid-cols-7 gap-2 text-center text-xs font-bold uppercase text-slate-500">
+        <div class="mt-5 grid grid-cols-7 gap-1 text-center text-[10px] font-bold uppercase text-slate-500 min-[390px]:gap-2 min-[390px]:text-xs">
           <span v-for="day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']" :key="day">{{ day }}</span>
         </div>
 
-        <div class="mt-2 grid grid-cols-7 gap-2">
+        <div class="mt-2 grid grid-cols-7 gap-1 min-[390px]:gap-2">
           <button
             v-for="day in calendarDays"
             :key="day.iso"
             type="button"
-            class="relative flex aspect-square min-h-16 flex-col justify-between rounded-md border p-2 text-left transition hover:-translate-y-0.5 hover:shadow-sm"
+            class="tap-target relative flex aspect-square min-h-12 flex-col justify-between rounded-md border p-1 text-left transition hover:-translate-y-0.5 hover:shadow-sm min-[390px]:min-h-14 min-[390px]:p-2 sm:min-h-16"
             :class="[
               day.isCurrentMonth ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50 text-slate-300',
-              day.isToday ? 'ring-2 ring-susi-red' : ''
+              day.isToday ? 'ring-2 ring-susi-red' : '',
+              selectedDate === day.iso ? 'bg-red-50' : ''
             ]"
             @click="openDay(day.iso)"
           >
             <div class="flex items-start justify-between gap-1">
-              <span class="text-sm font-bold">{{ day.day }}</span>
+              <span class="text-xs font-bold min-[390px]:text-sm">{{ day.day }}</span>
               <span
                 v-if="day.schedule"
-                class="grid h-5 min-w-5 place-items-center rounded-full px-1 text-xs font-bold text-white"
+                class="grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-bold text-white min-[390px]:h-5 min-[390px]:min-w-5 min-[390px]:text-xs"
                 :style="{ backgroundColor: day.schedule.count_logbooks === day.schedule.count_schedules ? '#10B981' : '#343464' }"
               >
                 <Check v-if="day.schedule.count_logbooks === day.schedule.count_schedules" class="h-3 w-3" />
@@ -97,14 +97,14 @@ const openDay = (date: string) => {
             </div>
             <div
               v-if="day.schedule"
-              class="rounded px-1.5 py-1 text-xs font-bold text-white"
+              class="truncate rounded px-1 py-0.5 text-[10px] font-bold text-white min-[390px]:px-1.5 min-[390px]:py-1 min-[390px]:text-xs"
               :style="{ backgroundColor: day.schedule.base_color }"
             >
               {{ day.schedule.duty_type }}
             </div>
           </button>
         </div>
-      </section>
+      </UiPanel>
 
       <section
         v-if="selectedDate"
@@ -113,7 +113,7 @@ const openDay = (date: string) => {
         Detail page coming soon.
       </section>
 
-      <section class="rounded-md bg-white p-5 shadow-panel ring-1 ring-slate-200">
+      <UiPanel>
         <div class="flex items-center gap-2">
           <CalendarDays class="h-5 w-5 text-susi-navy" />
           <h2 class="text-lg font-bold text-susi-ink">Legend</h2>
@@ -132,28 +132,9 @@ const openDay = (date: string) => {
             </div>
           </div>
         </div>
-      </section>
+      </UiPanel>
     </div>
 
-    <nav class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white">
-      <div class="mx-auto grid h-16 max-w-6xl grid-cols-4 px-2">
-        <NuxtLink to="/home" class="flex flex-col items-center justify-center gap-1 text-slate-500">
-          <Home class="h-5 w-5" />
-          <span class="text-xs font-bold">Home</span>
-        </NuxtLink>
-        <NuxtLink to="/schedule" class="flex flex-col items-center justify-center gap-1 text-susi-red">
-          <CalendarDays class="h-5 w-5" />
-          <span class="text-xs font-bold">Schedule</span>
-        </NuxtLink>
-        <NuxtLink to="/home" class="flex flex-col items-center justify-center gap-1 text-slate-500">
-          <BookOpenCheck class="h-5 w-5" />
-          <span class="text-xs font-bold">Logbook</span>
-        </NuxtLink>
-        <NuxtLink to="/home" class="flex flex-col items-center justify-center gap-1 text-slate-500">
-          <MoreHorizontal class="h-5 w-5" />
-          <span class="text-xs font-bold">More</span>
-        </NuxtLink>
-      </div>
-    </nav>
+    <AppBottomNav />
   </main>
 </template>

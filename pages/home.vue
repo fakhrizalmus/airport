@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import {
   Bell,
-  BookOpenCheck,
-  CalendarDays,
   ChevronRight,
-  Home,
-  MoreHorizontal,
   Plane,
+  RefreshCw,
   ShieldAlert,
   UserRound
 } from '@lucide/vue'
 import { storeToRefs } from 'pinia'
+import { computed, ref } from 'vue'
+import { useDateUtils } from '~/composables/useDateUtils'
+import { useRollingFlightHours } from '~/composables/useRollingFlightHours'
 import { useDashboardStore } from '~/stores/dashboard'
 import type { DocumentStatus } from '~/stores/dashboard'
 
@@ -26,6 +26,9 @@ const {
   selectedRange,
   today
 } = storeToRefs(dashboard)
+
+const { addDays, formatDate, toDate, toIso } = useDateUtils()
+const { hoursByDate, rollingSum } = useRollingFlightHours(flightHours)
 
 const ranges: RangeKey[] = ['1w', '1m', '3m', '6m', '1y']
 
@@ -73,43 +76,13 @@ const documentTone: Record<DocumentStatus, { label: string; badge: string; dot: 
   }
 }
 
-const toDate = (value: string) => {
-  const [year = 0, month = 1, day = 1] = value.split('-').map(Number)
-  return new Date(year, month - 1, day)
-}
+const isRefreshing = ref(false)
 
-const toIso = (date: Date) => {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-const addDays = (date: Date, days: number) => {
-  const next = new Date(date)
-  next.setDate(next.getDate() + days)
-  return next
-}
-
-const formatDate = (value: string, options: Intl.DateTimeFormatOptions = {}) =>
-  new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    ...options
-  }).format(toDate(value))
-
-const hoursByDate = computed(() => new Map(flightHours.value.map((item) => [item.date, item.hours])))
-
-const rollingSum = (dateIso: string, windowDays: number) => {
-  const end = toDate(dateIso)
-  let total = 0
-
-  for (let offset = windowDays - 1; offset >= 0; offset -= 1) {
-    total += hoursByDate.value.get(toIso(addDays(end, -offset))) ?? 0
-  }
-
-  return Number(total.toFixed(1))
+const refreshDashboard = () => {
+  isRefreshing.value = true
+  window.setTimeout(() => {
+    isRefreshing.value = false
+  }, 600)
 }
 
 const todayHours = computed(() => hoursByDate.value.get(today.value) ?? 0)
@@ -191,34 +164,33 @@ const upcomingFlight = computed(() => {
 
 <template>
   <main class="min-h-screen bg-susi-cloud pb-24">
-    <header class="bg-white shadow-sm ring-1 ring-slate-200">
-      <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-        <div class="flex min-w-0 items-center gap-3">
-          <img src="/images/susi-air-logo.png" alt="Susi Air" class="h-11 w-11 rounded-md bg-white object-contain ring-1 ring-slate-200">
-          <div class="min-w-0">
-            <p class="truncate text-sm font-semibold text-slate-500">Welcome back,</p>
-            <h1 class="truncate text-xl font-bold text-susi-ink">{{ pilot.name }}</h1>
-          </div>
-        </div>
-
+    <AppHeader eyebrow="Welcome back," :title="pilot.name">
+      <template #actions>
         <div class="flex items-center gap-3">
           <div class="hidden text-right sm:block">
             <p class="text-xs font-semibold uppercase text-slate-500">Total Flight Hours</p>
             <p class="text-lg font-bold text-susi-ink">{{ pilot.totalFlightHours.toLocaleString() }}h</p>
           </div>
-          <button type="button" class="relative grid h-11 w-11 place-items-center rounded-md border border-slate-200 bg-white text-susi-ink">
-            <Bell class="h-5 w-5" />
+          <button
+            type="button"
+            class="tap-target relative grid h-11 w-11 place-items-center rounded-md border border-slate-200 bg-white text-susi-ink transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70"
+            :disabled="isRefreshing"
+            aria-label="Refresh notifications"
+            @click="refreshDashboard"
+          >
+            <RefreshCw v-if="isRefreshing" class="h-5 w-5 animate-spin" />
+            <Bell v-else class="h-5 w-5" />
             <span class="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-susi-red px-1 text-xs font-bold text-white">3</span>
           </button>
           <div class="grid h-11 w-11 place-items-center rounded-md bg-susi-navy text-white">
             <UserRound class="h-5 w-5" />
           </div>
         </div>
-      </div>
-    </header>
+      </template>
+    </AppHeader>
 
     <div class="mx-auto max-w-6xl space-y-5 px-4 py-5 sm:px-6 lg:px-8">
-      <section class="rounded-md bg-white p-5 shadow-panel ring-1 ring-slate-200">
+      <UiPanel>
         <div class="flex items-center justify-between gap-3">
           <div>
             <p class="text-sm font-semibold uppercase text-susi-red">Upcoming Flight</p>
@@ -240,18 +212,18 @@ const upcomingFlight = computed(() => {
         </div>
 
         <p class="mt-3 text-sm font-semibold text-slate-500">{{ upcomingFlight.aircraft }}</p>
-      </section>
+      </UiPanel>
 
       <section>
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-bold text-susi-ink">Latest News</h2>
           <span class="text-sm font-bold text-susi-red">3 updates</span>
         </div>
-        <div class="mt-3 flex gap-3 overflow-x-auto pb-2">
+        <div class="mt-3 flex snap-x gap-3 overflow-x-auto pb-2">
           <article
             v-for="news in newsCards"
             :key="news.title"
-            class="min-w-[260px] rounded-md bg-white p-4 shadow-panel ring-1 ring-slate-200 sm:min-w-[320px]"
+            class="min-w-[260px] snap-start rounded-md bg-white p-4 shadow-panel ring-1 ring-slate-200 sm:min-w-[320px]"
           >
             <p class="text-xs font-bold uppercase text-susi-red">{{ news.meta }}</p>
             <h3 class="mt-2 text-base font-bold text-susi-ink">{{ news.title }}</h3>
@@ -260,26 +232,21 @@ const upcomingFlight = computed(() => {
         </div>
       </section>
 
-      <section class="rounded-md bg-white p-5 shadow-panel ring-1 ring-slate-200">
+      <UiPanel>
         <div>
           <p class="text-sm font-semibold uppercase text-susi-red">Hours to Limit</p>
           <h2 class="mt-1 text-xl font-bold text-susi-ink">Limit summary</h2>
         </div>
 
         <div class="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <article v-for="card in limitCards" :key="card.title" class="rounded-md border border-slate-200 p-4">
-            <p class="text-sm font-bold text-slate-500">{{ card.title }}</p>
-            <p class="mt-3 text-2xl font-bold text-susi-ink">{{ card.current }}h</p>
-            <p class="mt-1 text-xs font-semibold text-slate-500">Limit {{ card.limit }}h</p>
-            <div class="mt-3 h-2 rounded-full bg-slate-100">
-              <div
-                class="h-2 rounded-full"
-                :class="card.current >= card.limit ? 'bg-susi-red' : card.current / card.limit >= 0.8 ? 'bg-amber-500' : 'bg-emerald-500'"
-                :style="{ width: `${Math.min(100, Math.round((card.current / card.limit) * 100))}%` }"
-              />
-            </div>
-            <p class="mt-2 text-xs font-semibold text-slate-500">{{ card.window }}</p>
-          </article>
+          <LimitSummaryCard
+            v-for="card in limitCards"
+            :key="card.title"
+            :title="card.title"
+            :current="card.current"
+            :limit="card.limit"
+            :window="card.window"
+          />
         </div>
 
         <div class="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -289,7 +256,7 @@ const upcomingFlight = computed(() => {
               v-for="range in ranges"
               :key="range"
               type="button"
-              class="h-9 flex-1 rounded px-3 text-sm font-bold transition sm:min-w-11"
+              class="tap-target h-9 flex-1 rounded px-3 text-sm font-bold transition sm:min-w-11"
               :class="selectedRange === range ? 'bg-white text-susi-navy shadow-sm' : 'text-slate-500 hover:text-susi-ink'"
               @click="dashboard.setRange(range)"
             >
@@ -298,7 +265,7 @@ const upcomingFlight = computed(() => {
           </div>
         </div>
 
-        <div class="mt-4 overflow-hidden rounded-md border border-slate-200 bg-slate-50 p-4">
+        <div class="mt-4 overflow-hidden rounded-md border border-slate-200 bg-slate-50 p-3 sm:p-4">
           <svg class="h-72 w-full overflow-visible" :viewBox="`0 0 ${chartWidth} ${chartHeight + 70}`" role="img" aria-label="Rolling flight hours chart">
             <line x1="0" :y1="limitY" :x2="chartWidth" :y2="limitY" stroke="#EC343B" stroke-width="2" stroke-dasharray="8 8" />
             <text x="0" :y="limitY - 9" fill="#EC343B" font-size="13" font-weight="700">
@@ -334,9 +301,9 @@ const upcomingFlight = computed(() => {
             </g>
           </svg>
         </div>
-      </section>
+      </UiPanel>
 
-      <section class="rounded-md bg-white p-5 shadow-panel ring-1 ring-slate-200">
+      <UiPanel>
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm font-semibold uppercase text-susi-red">My Documents</p>
@@ -359,28 +326,9 @@ const upcomingFlight = computed(() => {
             </span>
           </article>
         </div>
-      </section>
+      </UiPanel>
     </div>
 
-    <nav class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white">
-      <div class="mx-auto grid h-16 max-w-6xl grid-cols-4 px-2">
-        <NuxtLink to="/home" class="flex flex-col items-center justify-center gap-1 text-susi-red">
-          <Home class="h-5 w-5" />
-          <span class="text-xs font-bold">Home</span>
-        </NuxtLink>
-        <NuxtLink to="/schedule" class="flex flex-col items-center justify-center gap-1 text-slate-500">
-          <CalendarDays class="h-5 w-5" />
-          <span class="text-xs font-bold">Schedule</span>
-        </NuxtLink>
-        <NuxtLink to="/home" class="flex flex-col items-center justify-center gap-1 text-slate-500">
-          <BookOpenCheck class="h-5 w-5" />
-          <span class="text-xs font-bold">Logbook</span>
-        </NuxtLink>
-        <NuxtLink to="/home" class="flex flex-col items-center justify-center gap-1 text-slate-500">
-          <MoreHorizontal class="h-5 w-5" />
-          <span class="text-xs font-bold">More</span>
-        </NuxtLink>
-      </div>
-    </nav>
+    <AppBottomNav />
   </main>
 </template>

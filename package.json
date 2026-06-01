@@ -13,12 +13,9 @@
     "@nuxtjs/tailwindcss": "latest",
     "@pinia/nuxt": "latest",
     "nuxt": "latest",
-    "pinia": "latest",
-    "vue": "latest",
-    "vue-router": "latest"
+    "pinia": "latest"
   },
   "devDependencies": {
-    "typescript": "^6.0.3",
-    "vue-tsc": "^3.3.3"
+    "typescript": "^6.0.3"
   }
 }
